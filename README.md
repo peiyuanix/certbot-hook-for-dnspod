@@ -36,3 +36,13 @@ sudo certbot renew --dry-run --manual --manual-public-ip-logging-ok --preferred-
 ```bash
 sudo certbot renew --dry-run --manual --manual-public-ip-logging-ok --preferred-challenges=dns --manual-auth-hook ./authenticator.sh --manual-cleanup-hook ./cleanup.sh --cert-name subdomain.yourdomain.com
 ```
+
+## 一种自动化renew配置方案  
+- 将go程序编译好安装到PATH  
+- 配置好 `/etc/dnspod/config.yml` 中的 `secretId`、`secretKey`、`domain`  
+- 将两个HOOK脚本放到 `/etc/dnspod/`  
+- 新建 `/etc/cron.daily/certbot-renew`，并加上**可执行权限**，这样即可每天自动检查并renew所有子域名下证书，并在更新证书之后重启nginx  
+    ```bash
+    # !/bin/bash
+    certbot renew --manual --manual-public-ip-logging-ok --preferred-challenges=dns --manual-auth-hook /etc/dnspod/authenticator.sh --manual-cleanup-hook /etc/dnspod/cleanup.sh --post-hook "systemctl reload nginx" --quiet
+    ```
